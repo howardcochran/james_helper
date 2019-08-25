@@ -1,5 +1,7 @@
 #ifndef __JAMES_HELPER__MORSE_H
 #define __JAMES_HELPER__MORSE_H
+#include "button.h"
+
 enum EventToken
 {
   TOKEN_DOT,
