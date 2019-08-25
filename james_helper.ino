@@ -5,6 +5,7 @@
 #include "gpio_button.h"
 #include "delay.h"
 #include "morse.h"
+#include "nurse_call.h"
 
 //*****************************************************************
 
@@ -16,7 +17,7 @@ void setup()
   vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
   while (!Serial) ;  // Wait for serial terminal to open port before starting program
 
-  Serial.println("******************************");
+  Serial.println("Started");
 
   // Error Blink Codes:
   //    3 blinks - Fatal Rtos Error, something bad happened. Think really hard about what you just changed.
@@ -32,9 +33,11 @@ void setup()
   GPIOButton raw_trigger(MAIN_BUTTON_PIN);
   Button main_trigger(raw_trigger, trigger_queue);
   Morse morse_decoder(trigger_queue);
+  NurseCall nurse_caller(trigger_queue);
 
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
-  xTaskCreate(Morse::taskEntry, "morse", 256, &morse_decoder, tskIDLE_PRIORITY + 2, &TaskHandle_morse);
+  //xTaskCreate(Morse::taskEntry, "morse", 256, &morse_decoder, tskIDLE_PRIORITY + 2, &TaskHandle_morse);
+  xTaskCreate(NurseCall::taskEntry, "nurseCall", 256, &nurse_caller, tskIDLE_PRIORITY + 2, &TaskHandle_nurseCall);
   //xTaskCreate(taskMonitor, "Task Monitor", 256, NULL, tskIDLE_PRIORITY + 1, &Handle_monitorTask);
 
   // Start the RTOS, this function will never return and will schedule the tasks.
@@ -49,6 +52,3 @@ void loop()
 {
     vNopDelayMS(1000);
 }
-
-
-//*****************************************************************

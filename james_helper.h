@@ -8,5 +8,6 @@
 
 TaskHandle_t TaskHandle_buttonRead;
 TaskHandle_t TaskHandle_morse;
+TaskHandle_t TaskHandle_nurseCall;
 // TaskHandle_t TaskHandle_monitor;
 #endif
