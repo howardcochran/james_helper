@@ -6,36 +6,6 @@
 #include "delay.h"
 #include "morse.h"
 
-/************** Type Defines and Constants **************/
-
-//**************************************************************************
-// global variables
-//**************************************************************************
-
-
-#if 0
-static void testTask(void *pvParameters)
-{
-  (void)pvParameters;
-  char out_buf[64];
-
-  Serial.println("Thread B: Started");
-  while(true)
-  {
-    ButtonEvent event;
-    if (!xQueueReceive(button_queue, &event, 30 * 1000))
-    {
-      Serial.println("No button events detected");
-    }
-    else
-    {
-      sprintf(out_buf, "Recv State: %d elapsed: %d\n", event.state, event.duration);
-      Serial.print(out_buf);
-    }
-  }
-}
-#endif
-
 //*****************************************************************
 
 void setup()
