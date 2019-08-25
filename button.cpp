@@ -8,7 +8,8 @@
 #define BUZZER_PIN 14
 
 Button::Button(RawButton& raw_button, QueueHandle_t output_queue)
-  : raw_button_(raw_button), output_queue_(output_queue)
+  : raw_button_(raw_button),
+    output_queue_(output_queue)
 {
 }
 

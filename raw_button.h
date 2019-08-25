@@ -7,9 +7,9 @@
 class RawButton
 {
 public:
-  virtual int getState() = 0;
-  virtual void init() {}
-  virtual void deInit() {}
+  virtual int getState(void) = 0;
+  virtual void init(void) {}
+  virtual void deInit(void) {}
 };
 #endif
 

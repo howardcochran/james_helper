@@ -4,14 +4,9 @@
 #include "button.h"
 #include "gpio_button.h"
 #include "delay.h"
+#include "morse.h"
 
 /************** Type Defines and Constants **************/
-
-const int unit_ms = 100;
-const int max_dot_duration = 2 * unit_ms;
-const int max_dash_duration = 10 * unit_ms;
-const int max_sub_letter_gap_duration = 2 * unit_ms;
-const int max_letter_gap_duration = 5 * unit_ms;
 
 //**************************************************************************
 // global variables
@@ -41,163 +36,6 @@ static void testTask(void *pvParameters)
 }
 #endif
 
-struct MorseMapping
-{
-  char *tokens;
-  char character;
-};
-
-const MorseMapping MORSE_MAP[] = {
-  {".-", 'A'},
-  {"-...", 'B'},
-  {"-.-.", 'C'},
-  {"-..", 'D'},
-  {".", 'E'},
-  {"..-.", 'F'},
-  {"--.", 'G'},
-  {"....", 'H'},
-  {"..", 'I'},
-  {".---", 'J'},
-  {"-.-", 'K'},
-  {".-..", 'L'},
-  {"--", 'M'},
-  {"-.", 'N'},
-  {"---", 'O'},
-  {".--.", 'P'},
-  {"--.-", 'Q'},
-  {".-.", 'R'},
-  {"...", 'S'},
-  {"-", 'T'},
-  {"..-", 'U'},
-  {"...-", 'V'},
-  {".--", 'W'},
-  {"-..-", 'X'},
-  {"-.--", 'Y'},
-  {"--..", 'Z'},
-  {".-.-.-", '.'},
-  {".----", '1'},
-  {"..---", '2'},
-  {"...--", '3'},
-  {"....-", '4'},
-  {".....", '5'},
-  {"-....", '6'},
-  {"--...", '7'},
-  {"---..", '8'},
-  {"----.", '9'},
-  {"-----", '0'},
-};
-
-enum EventToken
-{
-  TOKEN_DOT,
-  TOKEN_DASH,
-  TOKEN_BACKSPACE,
-  TOKEN_SUB_LETTER_GAP,
-  TOKEN_LETTER_GAP,
-  TOKEN_WORD_GAP
-};
-
-static int classifyEvent(ButtonEvent event)
-{
-  if (event.state == UP)
-  {
-    if (event.duration <= max_dot_duration)
-    {
-      return TOKEN_DOT;
-    }
-    else if (event.duration <= max_dash_duration)
-    {
-      return TOKEN_DASH;
-    }
-    else
-    {
-      return TOKEN_BACKSPACE;
-    }
-  }
-  else
-  {
-    if (event.duration <= max_sub_letter_gap_duration)
-    {
-      return TOKEN_SUB_LETTER_GAP;
-    }
-    else if (event.duration <= max_letter_gap_duration)
-    {
-      return TOKEN_LETTER_GAP;
-    }
-    else
-    {
-      return TOKEN_WORD_GAP;
-    }
-  }
-}
-
-char decodeTokens(char* tokens) {
-  for (int i = 0; i < (sizeof(MORSE_MAP) / sizeof(MorseMapping)); i++)
-  {
-    if (!strcmp(tokens, MORSE_MAP[i].tokens))
-    {
-      return MORSE_MAP[i].character;
-    }
-  }
-  return '!';
-}
-
-static void morseTaskEntry(void *params)
-{
-  QueueHandle_t input_queue = (QueueHandle_t *)params;
-  char out_buf[64];
-  const int TOKEN_BUF_SIZE = 16;
-  char tokens[TOKEN_BUF_SIZE + 1];
-  int index = 0;
-  ButtonEvent event = {UP, 0};
-
-  while(true)
-  {
-    EventToken token;
-    if (!xQueueReceive(input_queue, &event, max_letter_gap_duration))
-    {
-      token = (event.state == UP) ? TOKEN_WORD_GAP : TOKEN_BACKSPACE;
-    }
-    else
-    {
-      token = (EventToken)classifyEvent(event);
-    }
-    if (index >= TOKEN_BUF_SIZE)
-    {
-      Serial.println("Token buffer limit exceeded; resetting index to 0");
-      index = 0;
-    }
-    //sprintf(out_buf, "Recv State: %d dur: %d token: %d\n", event.state, event.duration, (int)token);
-    //Serial.print(out_buf);
-    if (token == TOKEN_DOT)
-    {
-      tokens[index++] = '.';
-    }
-    else if (token == TOKEN_DASH)
-    {
-      tokens[index++] = '-';
-    }
-    else if (token == TOKEN_LETTER_GAP || token == TOKEN_WORD_GAP)
-    {
-      if (index > 0)
-      {
-        tokens[index] = '\0';
-        //Serial.println(tokens);
-        Serial.print(decodeTokens(tokens));
-        index = 0;
-        if (token == TOKEN_WORD_GAP)
-        {
-          Serial.print(' ');
-        }
-      }
-    }
-    else if (token == TOKEN_BACKSPACE)
-    {
-      Serial.println("\nBACKSPACE");
-    }
-  }
-}
-
 //*****************************************************************
 
 void setup()
@@ -223,8 +61,10 @@ void setup()
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
   GPIOButton raw_trigger(MAIN_BUTTON_PIN);
   Button main_trigger(raw_trigger, trigger_queue);
+  Morse morse_decoder(trigger_queue);
+
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
-  xTaskCreate(morseTaskEntry, "morse", 256, trigger_queue, tskIDLE_PRIORITY + 2, &TaskHandle_morse);
+  xTaskCreate(Morse::taskEntry, "morse", 256, &morse_decoder, tskIDLE_PRIORITY + 2, &TaskHandle_morse);
   //xTaskCreate(taskMonitor, "Task Monitor", 256, NULL, tskIDLE_PRIORITY + 1, &Handle_monitorTask);
 
   // Start the RTOS, this function will never return and will schedule the tasks.
