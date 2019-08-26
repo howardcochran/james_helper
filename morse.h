@@ -1,5 +1,6 @@
 #ifndef __JAMES_HELPER__MORSE_H
 #define __JAMES_HELPER__MORSE_H
+#include "major_mode.h"
 #include "button.h"
 
 enum EventToken
@@ -12,7 +13,7 @@ enum EventToken
   TOKEN_WORD_GAP
 };
 
-class Morse
+class Morse : public MajorMode
 {
 public:
   struct MorseMapping
@@ -21,7 +22,7 @@ public:
     char character;
   };
 
-  Morse(QueueHandle_t input_queue);
+  void init(QueueHandle_t input_queue);
   void task(void);
   static void taskEntry(void *instance);
   char decodeTokens(char* tokens);

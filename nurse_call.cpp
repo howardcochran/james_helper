@@ -6,11 +6,12 @@
 #include "nurse_call.h"
 #include "note_pitches.h"
 
-NurseCall::NurseCall(QueueHandle_t input_queue)
-  : input_queue_(input_queue)
+void NurseCall::init(QueueHandle_t input_queue)
 {
+  input_queue_ = input_queue;
   digitalWrite(relay_pin_, LOW);
   pinMode(relay_pin_, OUTPUT);
+  create_task("nurse_call");
 }
 
 void NurseCall::callNurse(void) {
@@ -18,21 +19,19 @@ void NurseCall::callNurse(void) {
   digitalWrite(relay_pin_, HIGH);
   tone(buzzer_pin_, NOTE_G3);
   taskDelayMs(note_dur);
+  tone(buzzer_pin_, NOTE_A3);
+  taskDelayMs(note_dur);
   tone(buzzer_pin_, NOTE_B3);
+  taskDelayMs(note_dur);
+  tone(buzzer_pin_, NOTE_C4);
   taskDelayMs(note_dur);
   tone(buzzer_pin_, NOTE_D4);
   taskDelayMs(note_dur);
   tone(buzzer_pin_, NOTE_E4);
   taskDelayMs(note_dur);
-  tone(buzzer_pin_, NOTE_F4);
+  tone(buzzer_pin_, NOTE_FS4);
   taskDelayMs(note_dur);
-  tone(buzzer_pin_, NOTE_E4);
-  taskDelayMs(note_dur);
-  tone(buzzer_pin_, NOTE_D4);
-  taskDelayMs(note_dur);
-  tone(buzzer_pin_, NOTE_B3);
-  taskDelayMs(note_dur);
-  tone(buzzer_pin_, NOTE_G3);
+  tone(buzzer_pin_, NOTE_G4);
   taskDelayMs(note_dur * 2);
   noTone(buzzer_pin_);
   digitalWrite(relay_pin_, LOW);
@@ -74,9 +73,4 @@ void NurseCall::task(void)
       }
     }
   }
-}
-
-void NurseCall::taskEntry(void *instance)
-{
-  (static_cast<NurseCall*>(instance))->task();
 }

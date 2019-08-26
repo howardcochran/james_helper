@@ -46,14 +46,15 @@ const Morse::MorseMapping Morse::MORSE_MAP[] = {
   {"", '\0'}  // sentinel
 };
 
-Morse::Morse(QueueHandle_t input_queue)
-  : input_queue_(input_queue)
+void Morse::init(QueueHandle_t input_queue)
 {
+  input_queue_ = input_queue;
   unit_ms_ = 100;
   max_dot_duration_ = 2 * unit_ms_;
   max_dash_duration_ = 10 * unit_ms_;
   max_sub_letter_gap_duration_ = 2 * unit_ms_;
   max_letter_gap_duration_ = 5 * unit_ms_;
+  create_task("morse");
 }
 
 int Morse::classifyEvent(ButtonEvent event)
@@ -155,9 +156,4 @@ void Morse::task()
       Serial.println("\nBACKSPACE");
     }
   }
-}
-
-void Morse::taskEntry(void *instance)
-{
-  (static_cast<Morse*>(instance))->task();
 }

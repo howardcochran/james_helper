@@ -7,16 +7,15 @@
 #include "morse.h"
 #include "nurse_call.h"
 
-//*****************************************************************
+App james_helper;
 
-void setup()
+void App::init()
 {
 
   Serial.begin(115200);
-
   vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
-  while (!Serial) ;  // Wait for serial terminal to open port before starting program
-
+  while (!Serial)
+    ; // emtpy
   Serial.println("Started");
 
   // Error Blink Codes:
@@ -32,16 +31,41 @@ void setup()
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
   GPIOButton raw_trigger(MAIN_BUTTON_PIN);
   Button main_trigger(raw_trigger, trigger_queue);
-  Morse morse_decoder(trigger_queue);
-  NurseCall nurse_caller(trigger_queue);
 
+  TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
-  //xTaskCreate(Morse::taskEntry, "morse", 256, &morse_decoder, tskIDLE_PRIORITY + 2, &TaskHandle_morse);
-  xTaskCreate(NurseCall::taskEntry, "nurseCall", 256, &nurse_caller, tskIDLE_PRIORITY + 2, &TaskHandle_nurseCall);
-  //xTaskCreate(taskMonitor, "Task Monitor", 256, NULL, tskIDLE_PRIORITY + 1, &Handle_monitorTask);
+  nurse_caller_.init(trigger_queue);
+  morse_decoder_.init(trigger_queue);
+  modes_[(int)AppMode::NURSE_CALL] = &nurse_caller_;
+  modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
+  modes_[(int)AppMode::BT_BUTTON] = nullptr;
+  modes_[(int)AppMode::MENU] = nullptr;
+  modes_[4] = nullptr;
+  james_helper.set_major_mode(App::AppMode::NURSE_CALL);
+  vTaskStartScheduler();
+}
 
-  // Start the RTOS, this function will never return and will schedule the tasks.
-	vTaskStartScheduler();
+void setup()
+{
+  james_helper.init();
+}
+
+void App::suspend_all_modes(void)
+{
+  for (int i = 0; modes_[i] != nullptr; i++)
+  {
+    modes_[i]->suspend();
+  }
+}
+
+void App::set_major_mode(AppMode mode)
+{
+  char out_buf[64];
+  sprintf(out_buf, "set_major_mode %d\n", (int)mode);
+  Serial.print(out_buf);
+  cur_mode_ = mode;
+  suspend_all_modes();
+  modes_[(int)mode]->resume();
 }
 
 //*****************************************************************
@@ -50,5 +74,5 @@ void setup()
 //*****************************************************************
 void loop()
 {
-    vNopDelayMS(1000);
+  vNopDelayMS(1000);
 }
