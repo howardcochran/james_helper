@@ -36,12 +36,14 @@ void App::init()
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
   nurse_caller_.init(trigger_queue);
   morse_decoder_.init(trigger_queue);
+  hardware_button_.init(trigger_queue, 12);
   modes_[(int)AppMode::NURSE_CALL] = &nurse_caller_;
   modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
+  modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
   modes_[(int)AppMode::BT_BUTTON] = nullptr;
   modes_[(int)AppMode::MENU] = nullptr;
-  modes_[4] = nullptr;
   james_helper.set_major_mode(App::AppMode::NURSE_CALL);
+  modes_[(int)AppMode::MODE_COUNT] = nullptr;
   vTaskStartScheduler();
 }
 
@@ -52,9 +54,10 @@ void setup()
 
 void App::suspend_all_modes(void)
 {
-  for (int i = 0; modes_[i] != nullptr; i++)
+  for (int i = 0; i < (int)AppMode::MODE_COUNT; i++)
   {
-    modes_[i]->suspend();
+    if (modes_[i])
+      modes_[i]->suspend();
   }
 }
 
