@@ -28,7 +28,7 @@ public:
 protected:
   void suspend_all_modes(void);
   AppMode cur_mode_;
-  MajorMode* modes_[(int)AppMode::MODE_COUNT];
+  BaseTask* modes_[(int)AppMode::MODE_COUNT];
   Morse morse_decoder_;
   NurseCall nurse_caller_;
   HardwareButton hardware_button_;

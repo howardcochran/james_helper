@@ -1,20 +1,20 @@
 #ifndef __JAMES_HELPER__NURSE_CALL_H
 #define __JAMES_HELPER__NURSE_CALL_H
-#include "major_mode.h"
+#include "base_task.h"
 #include "button.h"
 
-class NurseCall : public MajorMode
+class NurseCall : public BaseTask
 {
 public:
-  void init(QueueHandle_t input_queue);
+  void init(QueueHandle_t input_queue, int relay_pin);
   void callNurse(void);
   void task(void);
 
 protected:
   QueueHandle_t input_queue_;
+  int relay_pin_;
   const int time_limit_ = 5000;
   const int clicks_to_trigger_ = 5;
-  const int relay_pin_ = 12;
   const int buzzer_pin_ = 14;
 };
 

@@ -1,22 +1,22 @@
 #include <FreeRTOS_SAMD21.h> //samd21
-#include "major_mode.h"
+#include "base_task.h"
 #include "delay.h"
 
 char out_buf[64];
 
-void MajorMode::suspend(void)
+void BaseTask::suspend(void)
 {
   if (task_handle_)
     vTaskSuspend(task_handle_);
 }
 
-void MajorMode::resume(void)
+void BaseTask::resume(void)
 {
   if (task_handle_)
     vTaskResume(task_handle_);
 }
 
-void MajorMode::create_task(const char *name, int stack_size, int priority)
+void BaseTask::create_task(const char *name, int stack_size, int priority)
 {
   xTaskCreate(
       taskEntryWrapper,
@@ -27,7 +27,7 @@ void MajorMode::create_task(const char *name, int stack_size, int priority)
       &task_handle_);
 }
 
-void MajorMode::taskEntryWrapper(void *instance)
+void BaseTask::taskEntryWrapper(void *instance)
 {
   (static_cast<MajorMode*>(instance))->task();
 }

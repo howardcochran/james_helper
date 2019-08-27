@@ -1,7 +1,7 @@
-#ifndef __JAMES_HELPER__MAJOR_MODE_H
-#define __JAMES_HELPER__MAJOR_MODE_H
+#ifndef __JAMES_HELPER__BASE_TASK_H
+#define __JAMES_HELPER__BASE_TASK_H
 
-class MajorMode
+class BaseTask
 {
 public:
   virtual void create_task(const char *name, int stack_size=256, int priority=2);

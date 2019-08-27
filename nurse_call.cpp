@@ -6,12 +6,14 @@
 #include "nurse_call.h"
 #include "note_pitches.h"
 
-void NurseCall::init(QueueHandle_t input_queue)
+void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
 {
   input_queue_ = input_queue;
+  relay_pin_ = relay_pin;
   digitalWrite(relay_pin_, LOW);
   pinMode(relay_pin_, OUTPUT);
   create_task("nurse_call");
+  Serial.println("init nurse call");
 }
 
 void NurseCall::callNurse(void) {
