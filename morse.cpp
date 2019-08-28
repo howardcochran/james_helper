@@ -55,6 +55,7 @@ void Morse::init(QueueHandle_t input_queue)
   max_sub_letter_gap_duration_ = 2 * unit_ms_;
   max_letter_gap_duration_ = 5 * unit_ms_;
   create_task("morse");
+  Serial.println("morse init");
 }
 
 int Morse::classifyEvent(ButtonEvent event)
@@ -111,15 +112,18 @@ void Morse::task()
   int index = 0;
   ButtonEvent event = {UP, 0};
 
+  Serial.println("morse begin"); taskDelayMs(1000);
   while(true)
   {
     EventToken token;
     if (!xQueueReceive(input_queue_, &event, max_letter_gap_duration_))
     {
+  Serial.println("here 1"); taskDelayMs(1000);
       token = (event.state == UP) ? TOKEN_WORD_GAP : TOKEN_BACKSPACE;
     }
     else
     {
+  Serial.println("here 2"); taskDelayMs(1000);
       token = (EventToken)classifyEvent(event);
     }
     if (index >= TOKEN_BUF_SIZE)

@@ -9,6 +9,7 @@ public:
   void init(QueueHandle_t input_queue, int relay_pin);
   void callNurse(void);
   void task(void);
+  void create_taska(char *name);
 
 protected:
   QueueHandle_t input_queue_;

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "button.h"
 #include "delay.h"
+#include "debug.h"
 #include "nurse_call.h"
 #include "note_pitches.h"
 
@@ -12,7 +13,7 @@ void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
   relay_pin_ = relay_pin;
   digitalWrite(relay_pin_, LOW);
   pinMode(relay_pin_, OUTPUT);
-  create_task("nurse_call");
+  create_task("nurse call");
   Serial.println("init nurse call");
 }
 
@@ -45,6 +46,7 @@ void NurseCall::task(void)
   ButtonEvent event = {UP, 0};
   TickType_t start_time = 0;
   int cur_clicks = 0;
+  Serial.println("Begin nurse call");
 
   while(true)
   {
@@ -58,6 +60,8 @@ void NurseCall::task(void)
     }
     else
     {
+      sprintf(out_buf, "event.state: %d, clicks: %d\n", event.state, cur_clicks);
+      Serial.print(out_buf);
       if (start_time == 0 || (xTaskGetTickCount() - start_time) > time_limit_)
       {
         start_time = xTaskGetTickCount();

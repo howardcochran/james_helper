@@ -1,5 +1,6 @@
 #include <FreeRTOS_SAMD21.h> //samd21
 #include <queue.h>
+#include "debug.h"
 #include "james_helper.h"
 #include "button.h"
 #include "gpio_button.h"
@@ -14,8 +15,10 @@ void App::init()
 
   Serial.begin(115200);
   vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
+  Serial.println("Startup Delay");
+  vNopDelayMS(5000); // prevents usb driver crash on startup, do not omit this
   while (!Serial)
-    ; // emtpy
+    ; // empty
   Serial.println("Started");
 
   // Error Blink Codes:
@@ -25,6 +28,8 @@ void App::init()
   //    1 blink  - Stack overflow, Task needs more bytes defined for its stack!
   //               Use the taskMonitor thread to help gauge how much more you need
   vSetErrorLed(ERROR_LED_PIN, ERROR_LED_LIGHTUP_STATE);
+  debug_init();
+
   digitalWrite(BUZZER_PIN, LOW);
   pinMode(BUZZER_PIN, OUTPUT);
 
@@ -34,16 +39,18 @@ void App::init()
 
   TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
-  nurse_caller_.init(trigger_queue);
-  morse_decoder_.init(trigger_queue);
-  hardware_button_.init(trigger_queue, 12);
+  nurse_caller_.init(trigger_queue, 12);
+  //morse_decoder_.init(trigger_queue);
+  //hardware_button_.init(trigger_queue, 12);
+
+  memset(modes_, 0, sizeof(modes_));
   modes_[(int)AppMode::NURSE_CALL] = &nurse_caller_;
-  modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
-  modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
-  modes_[(int)AppMode::BT_BUTTON] = nullptr;
-  modes_[(int)AppMode::MENU] = nullptr;
-  james_helper.set_major_mode(App::AppMode::NURSE_CALL);
+  //modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
+  //modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
+  //modes_[(int)AppMode::BT_BUTTON] = ;
+  //modes_[(int)AppMode::MENU] = ;
   modes_[(int)AppMode::MODE_COUNT] = nullptr;
+  //james_helper.set_major_mode(App::AppMode::NURSE_CALL);
   vTaskStartScheduler();
 }
 
