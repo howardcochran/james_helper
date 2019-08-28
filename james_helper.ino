@@ -39,6 +39,8 @@ void App::init()
 
   TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
+
+  prox_button_.init(trigger_queue);
   nurse_caller_.init(trigger_queue, 12);
   morse_decoder_.init(trigger_queue);
   hardware_button_.init(trigger_queue, 12);

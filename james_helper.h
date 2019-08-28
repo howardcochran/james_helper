@@ -2,7 +2,9 @@
 #define __JAMES_HELPER_H
 #include "morse.h"
 #include "nurse_call.h"
+#include "morse.h"
 #include "hardware_button.h"
+#include "vcnl4010.h"
 
 #define ERROR_LED_PIN 13 //Led Pin: Typical Arduino Board
 #define ERROR_LED_LIGHTUP_STATE LOW // the state that makes the led light up on your board, either low or high
@@ -32,6 +34,7 @@ protected:
   Morse morse_decoder_;
   NurseCall nurse_caller_;
   HardwareButton hardware_button_;
+  Vcnl4010 prox_button_;
 };
 
 #endif
