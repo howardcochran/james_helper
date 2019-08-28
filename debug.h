@@ -6,8 +6,6 @@
 
 void debug_init(void);
 int debug(const char *fmt, ...);
-//int debug_wait(const char *fmt, ...);
-//int debug_earlywait(const char *fmt, ...);
 int debugFromISR(const char *fmt, ...);
 
 #define debug_wait(FMT, ...) \

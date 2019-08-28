@@ -40,17 +40,16 @@ void App::init()
   TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
   nurse_caller_.init(trigger_queue, 12);
-  //morse_decoder_.init(trigger_queue);
-  //hardware_button_.init(trigger_queue, 12);
+  morse_decoder_.init(trigger_queue);
+  hardware_button_.init(trigger_queue, 12);
 
   memset(modes_, 0, sizeof(modes_));
   modes_[(int)AppMode::NURSE_CALL] = &nurse_caller_;
-  //modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
-  //modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
+  modes_[(int)AppMode::MORSE_KEYBOARD] = &morse_decoder_;
+  modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
   //modes_[(int)AppMode::BT_BUTTON] = ;
   //modes_[(int)AppMode::MENU] = ;
-  modes_[(int)AppMode::MODE_COUNT] = nullptr;
-  //james_helper.set_major_mode(App::AppMode::NURSE_CALL);
+  james_helper.set_major_mode(App::AppMode::NURSE_CALL);
   vTaskStartScheduler();
 }
 
@@ -70,9 +69,7 @@ void App::suspend_all_modes(void)
 
 void App::set_major_mode(AppMode mode)
 {
-  char out_buf[64];
-  sprintf(out_buf, "set_major_mode %d\n", (int)mode);
-  Serial.print(out_buf);
+  debug("set_major_mode %d\n", (int)mode);
   cur_mode_ = mode;
   suspend_all_modes();
   modes_[(int)mode]->resume();

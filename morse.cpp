@@ -106,24 +106,20 @@ char Morse::decodeTokens(char* tokens)
 
 void Morse::task()
 {
-  char out_buf[64];
   const int TOKEN_BUF_SIZE = 16;
   char tokens[TOKEN_BUF_SIZE + 1];
   int index = 0;
   ButtonEvent event = {UP, 0};
 
-  Serial.println("morse begin"); taskDelayMs(1000);
   while(true)
   {
     EventToken token;
     if (!xQueueReceive(input_queue_, &event, max_letter_gap_duration_))
     {
-  Serial.println("here 1"); taskDelayMs(1000);
       token = (event.state == UP) ? TOKEN_WORD_GAP : TOKEN_BACKSPACE;
     }
     else
     {
-  Serial.println("here 2"); taskDelayMs(1000);
       token = (EventToken)classifyEvent(event);
     }
     if (index >= TOKEN_BUF_SIZE)
@@ -131,8 +127,7 @@ void Morse::task()
       Serial.println("Token buffer limit exceeded; resetting index to 0");
       index = 0;
     }
-    // sprintf(out_buf, "Recv State: %d dur: %d token: %d\n", event.state, event.duration, (int)token);
-    // Serial.print(out_buf);
+    // debug("Recv State: %d dur: %d token: %d\n", event.state, event.duration, (int)token);
     if (token == TOKEN_DOT)
     {
       tokens[index++] = '.';

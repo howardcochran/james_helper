@@ -14,7 +14,6 @@ void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
   digitalWrite(relay_pin_, LOW);
   pinMode(relay_pin_, OUTPUT);
   create_task("nurse call");
-  Serial.println("init nurse call");
 }
 
 void NurseCall::callNurse(void) {
@@ -46,7 +45,6 @@ void NurseCall::task(void)
   ButtonEvent event = {UP, 0};
   TickType_t start_time = 0;
   int cur_clicks = 0;
-  Serial.println("Begin nurse call");
 
   while(true)
   {
