@@ -41,7 +41,6 @@ void NurseCall::callNurse(void) {
 
 void NurseCall::task(void)
 {
-  char out_buf[64];
   ButtonEvent event = {UP, 0};
   TickType_t start_time = 0;
   int cur_clicks = 0;
@@ -58,8 +57,7 @@ void NurseCall::task(void)
     }
     else
     {
-      sprintf(out_buf, "event.state: %d, clicks: %d\n", event.state, cur_clicks);
-      Serial.print(out_buf);
+      debug("event.state: %d, clicks: %d\n", event.state, cur_clicks);
       if (start_time == 0 || (xTaskGetTickCount() - start_time) > time_limit_)
       {
         start_time = xTaskGetTickCount();

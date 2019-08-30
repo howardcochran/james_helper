@@ -1,6 +1,7 @@
 #include <FreeRTOS_SAMD21.h> //samd21
 #include <queue.h>
 #include <Arduino.h>
+#include "debug.h"
 #include "button.h"
 #include "delay.h"
 #include "morse.h"
@@ -55,7 +56,7 @@ void Morse::init(QueueHandle_t input_queue)
   max_sub_letter_gap_duration_ = 2 * unit_ms_;
   max_letter_gap_duration_ = 5 * unit_ms_;
   create_task("morse");
-  Serial.println("morse init");
+  debug("morse init\n");
 }
 
 int Morse::classifyEvent(ButtonEvent event)
@@ -124,7 +125,7 @@ void Morse::task()
     }
     if (index >= TOKEN_BUF_SIZE)
     {
-      Serial.println("Token buffer limit exceeded; resetting index to 0");
+      debug("Token buffer limit exceeded; resetting index to 0\n");
       index = 0;
     }
     // debug("Recv State: %d dur: %d token: %d\n", event.state, event.duration, (int)token);
@@ -141,18 +142,18 @@ void Morse::task()
       if (index > 0)
       {
         tokens[index] = '\0';
-        //Serial.println(tokens);
-        Serial.print(decodeTokens(tokens));
+        //debug("%s\n", tokens);
+        debug("%c", decodeTokens(tokens));
         index = 0;
         if (token == TOKEN_WORD_GAP)
         {
-          Serial.print(' ');
+          debug(" ");
         }
       }
     }
     else if (token == TOKEN_BACKSPACE)
     {
-      Serial.println("\nBACKSPACE");
+      debug("\nBACKSPACE\n");
     }
   }
 }

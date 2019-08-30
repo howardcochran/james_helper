@@ -14,12 +14,11 @@ void App::init()
 {
 
   Serial.begin(115200);
-  vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
-  Serial.println("Startup Delay");
   vNopDelayMS(3000); // prevents usb driver crash on startup, do not omit this
   while (!Serial)
     ; // empty
-  Serial.println("Started");
+  debug_init();
+  debug("Started\n");
 
   // Error Blink Codes:
   //    3 blinks - Fatal Rtos Error, something bad happened. Think really hard about what you just changed.
@@ -28,7 +27,6 @@ void App::init()
   //    1 blink  - Stack overflow, Task needs more bytes defined for its stack!
   //               Use the taskMonitor thread to help gauge how much more you need
   vSetErrorLed(ERROR_LED_PIN, ERROR_LED_LIGHTUP_STATE);
-  debug_init();
 
   digitalWrite(BUZZER_PIN, LOW);
   pinMode(BUZZER_PIN, OUTPUT);
