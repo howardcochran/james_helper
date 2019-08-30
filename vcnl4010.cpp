@@ -6,28 +6,62 @@
 #include "raw_button.h"
 #include "vcnl4010.h"
 
+#define IN_BETWEEN 2
 void Vcnl4010::init(QueueHandle_t output_queue)
 {
   output_queue_ = output_queue;
+  filtered_state_ = IN_BETWEEN;
   if (!vcnl_.begin())
   {
     debug("Proximity sensor VNCL4010 not found!\n");
   }
+  vcnl_.setDelayFunction(taskDelayMs);
   create_task("VNCL4010_driver");
 }
 
 void Vcnl4010::task()
 {
-  TickType_t start_time = xTaskGetTickCount() - 1;
+  TickType_t start_stamp = xTaskGetTickCount() - 1;
   int count = 0;
+  float ema = 300;
+  float ema_alpha = (1.0 / 400.0);
+  const int down_thresh = -60;
+  const int up_thresh = 50;
+  TickType_t down_stamp = 0;
+  TickType_t raw_change_stamp = 0;
+  int prev_raw_state = IN_BETWEEN;
+  int debounce_time = 200;
+
   while (true)
   {
-    int cur_prox = vcnl_.readProximity();
-    TickType_t cur_time = xTaskGetTickCount();
+    int raw_prox = vcnl_.readProximity();
+    int cur_prox = (int)(10 * 65536 / raw_prox);
+    TickType_t cur_stamp = xTaskGetTickCount();
+    int rate = count * 1000 / (cur_stamp - start_stamp);
     ++count;
-    int rate = count * 1000 / (cur_time - start_time);
-    float inv = 1000.0 * 65536 / cur_prox;
-    debug("prox: %d inv: %d rate: %d\n", cur_prox, (int)inv, rate);
+
+    ema = ema * (1.0 - ema_alpha) + cur_prox * ema_alpha;
+    int delta = cur_prox - (int)ema;
+
+    int raw_state = IN_BETWEEN;
+    if (delta < down_thresh)
+      raw_state = DOWN;
+    else if (delta > up_thresh)
+      raw_state = UP;
+
+    if (prev_raw_state != raw_state)
+    {
+      prev_raw_state = raw_state;
+      raw_change_stamp = cur_stamp;
+    }
+    TickType_t raw_change_elapsed = cur_stamp - raw_change_stamp;
+    if (raw_change_elapsed > debounce_time)
+    {
+      filtered_state_ = raw_state;
+    }
+
+    if (count % 20 == 0)
+      debug("cur: %d filt: %d prox: %d ema: %d delta: %d\n", raw_state, filtered_state_, cur_prox, (int)ema, delta);
     taskDelayMs(1);
   }
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
