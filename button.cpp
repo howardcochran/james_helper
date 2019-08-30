@@ -42,7 +42,7 @@ void Button::task()
       prevStateChangeTime = curTime;
       prevButtonState = curButtonState;
     }
-    taskDelayMsUntil(&curTime, 2);
+    taskDelayMsUntil(&curTime, 10);
   }
 
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.

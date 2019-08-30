@@ -16,7 +16,7 @@ void App::init()
   Serial.begin(115200);
   vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
   Serial.println("Startup Delay");
-  vNopDelayMS(5000); // prevents usb driver crash on startup, do not omit this
+  vNopDelayMS(3000); // prevents usb driver crash on startup, do not omit this
   while (!Serial)
     ; // empty
   Serial.println("Started");
@@ -34,13 +34,13 @@ void App::init()
   pinMode(BUZZER_PIN, OUTPUT);
 
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
-  GPIOButton raw_trigger(MAIN_BUTTON_PIN);
-  Button main_trigger(raw_trigger, trigger_queue);
+  // GPIOButton raw_trigger(MAIN_BUTTON_PIN);
+  prox_button_.init(trigger_queue);
+  Button main_trigger(prox_button_, trigger_queue);
 
   TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
 
-  prox_button_.init(trigger_queue);
   nurse_caller_.init(trigger_queue, 12);
   morse_decoder_.init(trigger_queue);
   hardware_button_.init(trigger_queue, 12);

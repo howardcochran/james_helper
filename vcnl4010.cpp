@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include "delay.h"
 #include "debug.h"
+#include "raw_button.h"
 #include "vcnl4010.h"
 
 void Vcnl4010::init(QueueHandle_t output_queue)
@@ -32,3 +33,12 @@ void Vcnl4010::task()
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   vTaskDelete( NULL );
 }
+
+int Vcnl4010::getState()
+{
+  if (filtered_state_ == DOWN)
+    return DOWN;
+  else
+    return UP;  // IN_BETWEEN is UP
+}
+
