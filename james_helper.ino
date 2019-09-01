@@ -33,7 +33,7 @@ void App::init()
 
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
   // GPIOButton raw_trigger(MAIN_BUTTON_PIN);
-  prox_button_.init(trigger_queue);
+  prox_button_.init(trigger_queue, nh_);
   Button main_trigger(prox_button_, trigger_queue);
 
   TaskHandle_t TaskHandle_buttonRead;

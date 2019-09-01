@@ -1,17 +1,32 @@
 #include <FreeRTOS_SAMD21.h> //samd21
 #include <queue.h>
 #include <Arduino.h>
+#include <ros.h>
+#include <sensor_msgs/Range.h>
 #include "delay.h"
 #include "debug.h"
 #include "raw_button.h"
 #include "vcnl4010.h"
 
 #define IN_BETWEEN 2
-void Vcnl4010::init(QueueHandle_t output_queue)
+Vcnl4010::Vcnl4010()
+  : range_pub_("range_data", &range_msg_)
 {
+}
+
+void Vcnl4010::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
+{
+  nh_ = &nh;
+  nh_->advertise(range_pub_);
+  range_msg_.radiation_type = sensor_msgs::Range::INFRARED;
+  range_msg_.header.frame_id = "prox_sensor";
+  range_msg_.field_of_view = 20 * 3.14159 / 180;
+  range_msg_.min_range = 0.001;
+  range_msg_.max_range = 0.050;
+
   output_queue_ = output_queue;
   filtered_state_ = IN_BETWEEN;
-  if (!vcnl_.begin())
+  if (!vcnl_.begin(nh))
   {
     debug("Proximity sensor VNCL4010 not found!\n");
   }
@@ -60,9 +75,13 @@ void Vcnl4010::task()
       filtered_state_ = raw_state;
     }
 
-    if (count % 20 == 0)
-      debug("cur: %d filt: %d prox: %d ema: %d delta: %d\n", raw_state, filtered_state_, cur_prox, (int)ema, delta);
-    taskDelayMs(1);
+    range_msg_.header.stamp = nh_->now();
+    range_msg_.range = (float)cur_prox;
+    range_pub_.publish(&range_msg_);
+
+    if (count % 100 == 0)
+      debug("cur: %d filt: %d prox: %d ema: %d delta: %d rate: %d\n", raw_state, filtered_state_, cur_prox, (int)ema, delta, rate);
+    taskDelayMs(5);
   }
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   vTaskDelete( NULL );
