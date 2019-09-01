@@ -15,7 +15,10 @@ void App::init()
 {
 
   Serial.begin(115200);
-  vNopDelayMS(3000); // prevents usb driver crash on startup, do not omit this
+  digitalWrite(BUZZER_PIN, LOW);
+  pinMode(BUZZER_PIN, OUTPUT);
+  tone(BUZZER_PIN, 880, 200);
+  vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
   while (!Serial)
     ; // empty
 
@@ -29,9 +32,6 @@ void App::init()
   //    1 blink  - Stack overflow, Task needs more bytes defined for its stack!
   //               Use the taskMonitor thread to help gauge how much more you need
   vSetErrorLed(ERROR_LED_PIN, ERROR_LED_LIGHTUP_STATE);
-
-  digitalWrite(BUZZER_PIN, LOW);
-  pinMode(BUZZER_PIN, OUTPUT);
 
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
   // GPIOButton raw_trigger(MAIN_BUTTON_PIN);
