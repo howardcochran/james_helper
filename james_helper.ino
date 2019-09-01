@@ -19,6 +19,8 @@ void App::init()
   while (!Serial)
     ; // empty
 
+  nh_.getHardware()->setBaud(115200);
+  nh_.initNode();
   debug_init(nh_);
   // Error Blink Codes:
   //    3 blinks - Fatal Rtos Error, something bad happened. Think really hard about what you just changed.
