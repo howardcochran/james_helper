@@ -13,14 +13,13 @@ App james_helper;
 
 void App::init()
 {
-
-  Serial.begin(115200);
   digitalWrite(BUZZER_PIN, LOW);
   pinMode(BUZZER_PIN, OUTPUT);
   tone(BUZZER_PIN, 880, 200);
-  vNopDelayMS(1000); // prevents usb driver crash on startup, do not omit this
-  while (!Serial)
-    ; // empty
+  vNopDelayMS(4000);
+  tone(BUZZER_PIN, 700);
+  vNopDelayMS(100);
+  tone(BUZZER_PIN, 880, 100);
 
   nh_.getHardware()->setBaud(115200);
   nh_.initNode();
