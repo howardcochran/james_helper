@@ -1,10 +1,11 @@
 #ifndef __JAMES_HELPER__DEBUG_H
 #define __JAMES_HELPER__DEBUG_H
+#include <ros.h>
 #include "delay.h"
 
 #define DELAY_MS 500
 
-void debug_init(void);
+void debug_init(ros::NodeHandle &node_handle);
 int debug(const char *fmt, ...);
 int debugFromISR(const char *fmt, ...);
 

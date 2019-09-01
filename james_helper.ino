@@ -1,7 +1,8 @@
-#include <FreeRTOS_SAMD21.h> //samd21
+#define USE_USBCON
+#include <FreeRTOS_SAMD21.h>
+#include "james_helper.h"
 #include <queue.h>
 #include "debug.h"
-#include "james_helper.h"
 #include "button.h"
 #include "gpio_button.h"
 #include "delay.h"
@@ -17,9 +18,8 @@ void App::init()
   vNopDelayMS(3000); // prevents usb driver crash on startup, do not omit this
   while (!Serial)
     ; // empty
-  debug_init();
-  debug("Started\n");
 
+  debug_init(nh_);
   // Error Blink Codes:
   //    3 blinks - Fatal Rtos Error, something bad happened. Think really hard about what you just changed.
   //    2 blinks - Malloc Failed, Happens when you couldn't create a rtos object.
@@ -81,5 +81,6 @@ void App::set_major_mode(AppMode mode)
 //*****************************************************************
 void loop()
 {
-  vNopDelayMS(1000);
+  james_helper.getNodeHandle()->spinOnce();
+  vNopDelayMS(1);
 }

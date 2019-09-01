@@ -1,5 +1,7 @@
 #ifndef __JAMES_HELPER_H
 #define __JAMES_HELPER_H
+#define USE_USBCON
+#include <ros.h>
 #include "morse.h"
 #include "nurse_call.h"
 #include "morse.h"
@@ -26,6 +28,7 @@ public:
 
   void init(void);
   void set_major_mode(AppMode);
+  ros::NodeHandle* getNodeHandle() { return &nh_; }
 
 protected:
   void suspend_all_modes(void);
@@ -35,6 +38,7 @@ protected:
   NurseCall nurse_caller_;
   HardwareButton hardware_button_;
   Vcnl4010 prox_button_;
+  ros::NodeHandle nh_;
 };
 
 #endif
