@@ -6,7 +6,7 @@
 #include "nurse_call.h"
 #include "morse.h"
 #include "hardware_button.h"
-#include "vcnl4010.h"
+#include "vl6180x.h"
 
 #define ERROR_LED_PIN 13 //Led Pin: Typical Arduino Board
 #define ERROR_LED_LIGHTUP_STATE LOW // the state that makes the led light up on your board, either low or high
@@ -37,7 +37,7 @@ protected:
   Morse morse_decoder_;
   NurseCall nurse_caller_;
   HardwareButton hardware_button_;
-  Vcnl4010 prox_button_;
+  Vl6180x prox_button_;
   ros::NodeHandle nh_;
 };
 
