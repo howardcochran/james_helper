@@ -1,0 +1,92 @@
+#!/usr/bin/python
+
+import rospy
+import sensor_msgs.msg as sensor_msgs
+import std_msgs.msg as std_msgs
+
+
+class Ema(object):
+    def __init__(self, period):
+        self._period = period
+        self.alpha = 1.0 / period
+        self.ema = None
+
+    def new_data(self, value):
+        if self.ema is None:
+            self.ema = value
+        else:
+            self.ema = self.alpha * value + (1.0 - self.alpha) * self.ema
+
+    def reset(self):
+        self.ema = None
+
+
+class FingerFilter(object):
+    def __init__(self, in_topic):
+        self._short_ema_pub = rospy.Publisher("~short_ema", std_msgs.Float64, queue_size=2)
+        self._long_ema_pub = rospy.Publisher("~long_ema", std_msgs.Float64, queue_size=2)
+        self._button_state_pub = rospy.Publisher("~button_state", std_msgs.Bool, queue_size=2)
+        self._button_waveform_pub = rospy.Publisher("~button_waveform", std_msgs.Float64, queue_size=2)
+        self.short_ema = Ema(10)
+        self.long_ema = Ema(50)
+        self.down_thresh = 5
+        self.up_thresh = 3
+        self._down_latch_dur = rospy.Duration(0.5)
+        self._start_delay_samples = 100
+        self.reset()
+        self._range_sub = rospy.Subscriber(in_topic, sensor_msgs.Range, self.prox_sensor_cb)
+
+    def reset(self):
+        self._is_button_down = False
+        self._samples = 0
+        self._begin_down_stamp = None
+        self._begin_down_val = 0
+        self.short_ema.reset()
+        self.long_ema.reset()
+
+    def publish_button_state(self):
+        self._button_state_pub.publish(std_msgs.Bool(self._is_button_down))
+        rospy.loginfo("is_button_down: %s", self._is_button_down)
+
+    def update_button_state(self, val):
+        raw_down = (val < self.short_ema.ema - self.down_thresh)
+        if raw_down and not self._is_button_down:
+            self._is_button_down = True
+            self._begin_down_stamp = rospy.Time.now()
+            self._begin_down_val = val
+            self.publish_button_state()
+        elif self._is_button_down:
+            raw_up = self._begin_down_val + self.up_thresh
+            cur_down_dur = rospy.Time.now() - self._begin_down_stamp
+            if raw_up and cur_down_dur > self._down_latch_dur:
+                self._is_button_down = False
+                self._begin_down_stamp = None
+                self._begin_down_val = 0
+                self.publish_button_state()
+        self._button_waveform_pub.publish(std_msgs.Float64(50 if self._is_button_down else 30))
+        return self._is_button_down
+
+    def update_emas(self, val):
+        self.short_ema.new_data(val)
+        self.long_ema.new_data(val)
+        self.update_button_state(val)
+        self._short_ema_pub.publish(std_msgs.Float64(self.short_ema.ema))
+        self._long_ema_pub.publish(std_msgs.Float64(self.long_ema.ema))
+
+    def prox_sensor_cb(self, msg):
+        val = msg.range
+        if val < 200:  # Don't count invalid values
+            self._samples += 1
+        if self._samples < self._start_delay_samples:
+            self.update_emas(val)
+            return
+
+        is_down = self.update_button_state(val)
+        if True or not is_down:
+            self.update_emas(val)
+
+
+if __name__ == "__main__":
+    rospy.init_node("finger_filter")
+    filt = FingerFilter("/range_data")
+    rospy.spin()
