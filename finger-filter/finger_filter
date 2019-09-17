@@ -23,16 +23,17 @@ class Ema(object):
 
 class FingerFilter(object):
     def __init__(self, in_topic):
-        self._short_ema_pub = rospy.Publisher("~short_ema", std_msgs.Float64, queue_size=2)
-        self._long_ema_pub = rospy.Publisher("~long_ema", std_msgs.Float64, queue_size=2)
+        self._emas = [Ema(10), Ema(50), Ema(200)]
+        self._ema_pubs = [rospy.Publisher("~ema" + str(i), std_msgs.Float64, queue_size=2)
+                for i in range(len(self._emas))]
         self._button_state_pub = rospy.Publisher("~button_state", std_msgs.Bool, queue_size=2)
-        self._button_waveform_pub = rospy.Publisher("~button_waveform", std_msgs.Float64, queue_size=2)
-        self.short_ema = Ema(10)
-        self.long_ema = Ema(50)
+        self._button_waveform_pub = rospy.Publisher("~button_waveform",
+                std_msgs.Float64, queue_size=2)
         self.down_thresh = 5
         self.up_thresh = 3
         self._down_latch_dur = rospy.Duration(0.5)
-        self._start_delay_samples = 100
+        self._down_timeout = rospy.Duration(2)
+        self._start_delay_samples = 200
         self.reset()
         self._range_sub = rospy.Subscriber(in_topic, sensor_msgs.Range, self.prox_sensor_cb)
 
@@ -41,37 +42,46 @@ class FingerFilter(object):
         self._samples = 0
         self._begin_down_stamp = None
         self._begin_down_val = 0
-        self.short_ema.reset()
-        self.long_ema.reset()
+        for ema in self._emas:
+            ema.reset()
 
     def publish_button_state(self):
         self._button_state_pub.publish(std_msgs.Bool(self._is_button_down))
         rospy.loginfo("is_button_down: %s", self._is_button_down)
 
+    def down_dur(self):
+        if self._begin_down_stamp is not None:
+            return rospy.Time.now() - self._begin_down_stamp
+
+    def down_timeout(self):
+        return self.down_dur() > self._down_timeout
+
     def update_button_state(self, val):
-        raw_down = (val < self.short_ema.ema - self.down_thresh)
-        if raw_down and not self._is_button_down:
+        raw_down = (val < self._emas[0].ema - self.down_thresh)
+        if raw_down and not self._is_button_down and self.is_stable():
             self._is_button_down = True
             self._begin_down_stamp = rospy.Time.now()
-            self._begin_down_val = val
+            self._begin_down_val = self._emas[0].ema
             self.publish_button_state()
         elif self._is_button_down:
-            raw_up = self._begin_down_val + self.up_thresh
-            cur_down_dur = rospy.Time.now() - self._begin_down_stamp
-            if raw_up and cur_down_dur > self._down_latch_dur:
+            raw_up = (val > self._begin_down_val - self.up_thresh)
+            if raw_up and self.down_dur() > self._down_latch_dur:
                 self._is_button_down = False
                 self._begin_down_stamp = None
                 self._begin_down_val = 0
                 self.publish_button_state()
-        self._button_waveform_pub.publish(std_msgs.Float64(50 if self._is_button_down else 30))
+        self._button_waveform_pub.publish(std_msgs.Float64(20 if self._is_button_down else 55))
         return self._is_button_down
 
     def update_emas(self, val):
-        self.short_ema.new_data(val)
-        self.long_ema.new_data(val)
-        self.update_button_state(val)
-        self._short_ema_pub.publish(std_msgs.Float64(self.short_ema.ema))
-        self._long_ema_pub.publish(std_msgs.Float64(self.long_ema.ema))
+        for ema, pub in zip(self._emas, self._ema_pubs):
+            ema.new_data(val)
+            pub.publish(std_msgs.Float64(ema.ema))
+
+    def is_stable(self):
+        result = -4 <= self._emas[1].ema - self._emas[2].ema <= 0
+        result = result and (-8 <= self._emas[0].ema - self._emas[1].ema <= 0)
+        return result
 
     def prox_sensor_cb(self, msg):
         val = msg.range
@@ -79,10 +89,11 @@ class FingerFilter(object):
             self._samples += 1
         if self._samples < self._start_delay_samples:
             self.update_emas(val)
+            print "Emas: ", tuple((ema.ema for ema in self._emas))
             return
 
         is_down = self.update_button_state(val)
-        if True or not is_down:
+        if not is_down or self.down_timeout():
             self.update_emas(val)
 
 
