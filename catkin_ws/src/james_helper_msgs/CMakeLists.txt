@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   Float32Array.msg
+  RangeButton.msg
 )
 
 # Generate services in the 'srv' folder
