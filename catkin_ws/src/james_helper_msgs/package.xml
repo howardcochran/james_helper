@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>james_helper_msgs</name>
+  <version>1.0.0</version>
+  <description>Custom messages to communicate within the James Accessibility Project</description>
+
+  <license>CLOSED</license>
+
+  <author email="howard@badger-technologies.com">Howard Cochran</author>
+  <maintainer email="howard@badger-technologies.com">Howard Cochran</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+
+</package>
