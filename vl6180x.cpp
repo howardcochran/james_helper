@@ -2,7 +2,7 @@
 #include <queue.h>
 #include <Arduino.h>
 #include <ros.h>
-#include <sensor_msgs/Range.h>
+#include <james_helper_msgs/RangeButton.h>
 #include "delay.h"
 #include "debug.h"
 #include "raw_button.h"
@@ -10,22 +10,23 @@
 
 #define IN_BETWEEN 2
 Vl6180x::Vl6180x()
-  : range_pub_("range_data", &range_msg_)
+  : button_pub_("finger_button", &button_msg_)
 {
 }
 
 void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
 {
   nh_ = &nh;
-  nh_->advertise(range_pub_);
-  range_msg_.radiation_type = sensor_msgs::Range::INFRARED;
-  range_msg_.header.frame_id = "prox_sensor";
-  range_msg_.field_of_view = 20 * 3.14159 / 180;
-  range_msg_.min_range = 0.001;
-  range_msg_.max_range = 0.050;
+  nh_->advertise(button_pub_);
+  memset(&button_msg_, 0, sizeof(button_msg_));
+  button_msg_.emas_length = button_msg_.ema_periods_length = EMA_COUNT;
+  button_msg_.emas = emas_;
+  button_msg_.ema_periods = ema_periods_;
+  button_msg_.misc = misc_;
 
   output_queue_ = output_queue;
   filtered_state_ = IN_BETWEEN;
+  samples_ = 0;
   if (!driver_.begin())
   {
     debug("Proximity sensor VL6180X not found!\n");
@@ -38,6 +39,62 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   create_task("VL6180X_driver");
 }
 
+class Ema
+{
+protected:
+  int period_;
+  float alpha_;
+  float ema_;
+
+public:
+  Ema(int period)
+      : period_(period), alpha_(1.0 / period), ema_(NAN)
+  {
+  }
+
+  void new_data(float val)
+  {
+    if (isnan(ema_))
+      ema_ = val;
+    else
+      ema_ = alpha_ * val + (1.0 - alpha_) * ema_;
+  }
+
+  void reset() { ema_ = NAN; }
+
+  float ema() const { return ema_; }
+};
+
+struct Config
+{
+  int _start_delay_samples;
+};
+Config cfg { 200 };
+
+void Vl6180x::task()
+{
+  TickType_t start_stamp = xTaskGetTickCount() - 1;
+  TickType_t down_stamp = 0;
+  TickType_t raw_change_stamp = 0;
+  int prev_raw_state = IN_BETWEEN;
+  Ema emas[] = {Ema(20), Ema(50), Ema(200)};
+
+  while (true)
+  {
+    int cur_prox = driver_.readRange();
+    TickType_t cur_stamp = xTaskGetTickCount();
+    int rate = samples_ * 1000 / (cur_stamp - start_stamp);
+    ++samples_;
+
+    if (samples_ % 20 == 0)
+      debug("prox: %d rate: %d\n", cur_prox, rate);
+    taskDelayMs(5);
+  }
+  // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
+  vTaskDelete( NULL );
+}
+
+#if 0
 void Vl6180x::task()
 {
   TickType_t start_stamp = xTaskGetTickCount() - 1;
@@ -92,6 +149,7 @@ void Vl6180x::task()
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   vTaskDelete( NULL );
 }
+#endif
 
 int Vl6180x::getState()
 {
