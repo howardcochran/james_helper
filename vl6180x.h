@@ -5,8 +5,38 @@
 #include "Adafruit_VL6180X.h"
 #include "base_task.h"
 #include "raw_button.h"
+#include "debug.h"
 
 #define EMA_COUNT 3
+
+class Ema
+{
+protected:
+  int period_;
+  float alpha_;
+  float ema_;
+  int count_;
+
+public:
+  Ema(int period)
+      : period_(period), alpha_(1.0 / period), ema_(-1.0), count_(0)
+  {
+  }
+
+  void new_data(float val)
+  {
+    if (ema_ < 0.0)
+      ema_ = val;
+    else
+      ema_ = alpha_ * val + (1.0 - alpha_) * ema_;
+  }
+
+  void reset() { ema_ = NAN; }
+
+  float ema() const { return ema_; }
+  int emai() const { return static_cast<int>(ema_); }
+  int period() const { return period_; }
+};
 
 class Vl6180x : public BaseTask, public RawButton
 {
@@ -17,16 +47,28 @@ public:
   int getState();
 
 protected:
+  void updateEmas(float val);
+  bool updateButtonState(float val);
+  bool isStable();
+  long downDuration();
+  bool isDownTimeout();
+  void publishRangeButton(float range);
+
   QueueHandle_t output_queue_;
   Adafruit_VL6180X driver_;
   int filtered_state_;
   ros::NodeHandle* nh_;
   ros::Publisher button_pub_;
   james_helper_msgs::RangeButton button_msg_;
-  float emas_[EMA_COUNT];
-  float ema_periods_[EMA_COUNT];
-  float misc_[0];
+  float msg_emas_[EMA_COUNT];
+  float msg_ema_periods_[EMA_COUNT];
+  float msg_misc_[0];
+  Ema emas_[EMA_COUNT];
   int samples_;
+  bool is_button_down_;
+  long begin_down_stamp_;
+  float begin_down_val_;
+
 };
 
 #endif
