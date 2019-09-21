@@ -53,10 +53,12 @@ void NurseCall::task(void)
     }
     else if (event.state == UP)
     {
+      tone(buzzer_pin_, 440, 50);
       continue;
     }
     else
     {
+      tone(buzzer_pin_, 220, 50);
       debug("event.state: %d, clicks: %d\n", event.state, cur_clicks);
       if (start_time == 0 || (xTaskGetTickCount() - start_time) > time_limit_)
       {
