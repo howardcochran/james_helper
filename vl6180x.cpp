@@ -34,22 +34,26 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   button_msg_.misc = diffs_;
   nh_->advertise(button_pub_);
 
-  samples_ = 0;
-  is_button_down_ = false;
-  begin_down_stamp_ = 0;
-  begin_down_val_ = 0.0;
-
   output_queue_ = output_queue;
+  resetState();
+  resetDriver();
+  create_task("VL6180X_driver");
+}
+
+void Vl6180x::resetDriver()
+{
+  digitalWrite(ENABLE_PIN, LOW);
+  vNopDelayMS(10);  // Can be called before scheduler started!
+  digitalWrite(ENABLE_PIN, HIGH);
+  vNopDelayMS(10);
+
+  driver_.setDelayFunction(taskDelayMs);
   if (!driver_.begin())
   {
     debug("Proximity sensor VL6180X not found!\n");
   }
-  //driver_.setDelayFunction(taskDelayMs);
   driver_.write8(VL6180X_REG_READOUT_AVERAGING_SAMPLE_PERIOD, 0x30);  // default 0x30
   driver_.write8(VL6180X_REG_SYSRANGE_MAX_CONVERGENCE_TIME, 7);  // Units ms. default 49 decimal
-  driver_.setDelayFunction(taskDelayMs);
-
-  create_task("VL6180X_driver");
 }
 
 struct Config
@@ -166,9 +170,23 @@ void Vl6180x::publishRangeButton(float range)
   button_pub_.publish(&button_msg_);
 }
 
+void Vl6180x::resetState()
+{
+  samples_ = 0;
+  is_button_down_ = false;
+  begin_down_stamp_ = 0;
+  begin_down_val_ = 0.0;
+  memset(diffs_, 0, sizeof(diffs_));
+  for (int i = 0; i < EMA_COUNT; i++)
+  {
+    emas_[i].reset();
+  }
+}
+
 void Vl6180x::task()
 {
   TickType_t start_stamp = xTaskGetTickCount() - 1;
+  int reset_count = 0;
 
   debug("VL6180X entry");
   while (true)
@@ -176,6 +194,18 @@ void Vl6180x::task()
     digitalWrite(13, HIGH);
     int cur_prox = driver_.readRange();
     digitalWrite(13, LOW);
+
+    if (driver_.driver_status != 0)
+    {
+      debug("ERROR: PROX READ FAILED. Status: %d", driver_.driver_status);
+      tone(BUZZER_PIN, 880, 5000);
+      resetDriver();
+      resetState();
+      ++reset_count;
+      taskDelayMs(5000);
+      debug("Reset Complete");
+      continue;
+    }
 
     if (samples_ % 200 == 0)
       tone(BUZZER_PIN, 220, 3);
@@ -209,8 +239,9 @@ void Vl6180x::task()
     publishRangeButton(cur_prox);
     if (samples_ % 50 == 0)
     {
-      debug("prox: %d rate: %d down: %d stable: %d emas: %d %d %d\n", cur_prox, rate,
-            is_down, button_msg_.is_stable, emas_[0].emai(), emas_[1].emai(), emas_[1].emai());
+      debug("prox: %d rate: %d down: %d stable: %d emas: %d %d %d resets: %d\n", cur_prox, rate,
+            is_down, button_msg_.is_stable, emas_[0].emai(), emas_[1].emai(), emas_[1].emai(),
+            reset_count);
     }
     taskDelayMs(5);
   }

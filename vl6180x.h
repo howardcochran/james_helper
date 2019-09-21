@@ -8,6 +8,7 @@
 #include "debug.h"
 
 #define EMA_COUNT 3
+#define ENABLE_PIN 11
 
 class Ema
 {
@@ -19,13 +20,13 @@ protected:
 
 public:
   Ema(int period)
-      : period_(period), alpha_(1.0 / period), ema_(-1.0), count_(0)
+      : period_(period), alpha_(1.0 / period), ema_(NAN), count_(0)
   {
   }
 
   void new_data(float val)
   {
-    if (ema_ < 0.0)
+    if (isnan(ema_)) // || ema_ < 0.0)
       ema_ = val;
     else
       ema_ = alpha_ * val + (1.0 - alpha_) * ema_;
@@ -47,6 +48,8 @@ public:
   int getState();
 
 protected:
+  void resetDriver();
+  void resetState();
   void updateEmas(float val);
   void updateDiffs(float val);
   bool updateButtonState(float val);
