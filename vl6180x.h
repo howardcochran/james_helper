@@ -48,8 +48,10 @@ public:
 
 protected:
   void updateEmas(float val);
+  void updateDiffs(float val);
   bool updateButtonState(float val);
   bool isStable();
+  bool isTrendDown();
   long downDuration();
   bool isDownTimeout();
   void publishRangeButton(float range);
@@ -62,7 +64,7 @@ protected:
   james_helper_msgs::RangeButton button_msg_;
   float msg_emas_[EMA_COUNT];
   float msg_ema_periods_[EMA_COUNT];
-  float msg_misc_[0];
+  float diffs_[EMA_COUNT+2];
   Ema emas_[EMA_COUNT];
   int samples_;
   bool is_button_down_;

@@ -26,12 +26,12 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   nh_ = &nh;
   memset(msg_emas_, 0, sizeof(msg_emas_));
   memset(msg_ema_periods_, 0, sizeof(msg_ema_periods_));
-  memset(msg_misc_, 0, sizeof(msg_misc_));
+  memset(diffs_, 0, sizeof(diffs_));
   button_msg_.emas_length = button_msg_.ema_periods_length = EMA_COUNT;
   button_msg_.emas = msg_emas_;
   button_msg_.ema_periods = msg_ema_periods_;
-  button_msg_.misc_length = sizeof(msg_misc_) / sizeof(msg_misc_[0]);
-  button_msg_.misc = msg_misc_;
+  button_msg_.misc_length = sizeof(diffs_) / sizeof(diffs_[0]);
+  button_msg_.misc = diffs_;
   nh_->advertise(button_pub_);
 
   samples_ = 0;
@@ -71,6 +71,15 @@ void Vl6180x::updateEmas(float val)
   }
 }
 
+void Vl6180x::updateDiffs(float val)
+{
+  diffs_[0] = val - emas_[0].ema();
+  for (int i = 1; i < EMA_COUNT; i++)
+  {
+    diffs_[i] = emas_[i-1].ema() - emas_[i].ema();
+  }
+}
+
 long Vl6180x::downDuration()
 {
   if (begin_down_stamp_)
@@ -86,17 +95,28 @@ bool Vl6180x::isDownTimeout()
 
 bool Vl6180x::isStable()
 {
-  float diff2 = emas_[1].ema() - emas_[2].ema();
-  float diff1 = emas_[0].ema() - emas_[1].ema();
-  bool result = -8 <= diff1 && diff1 <= 0;
-  result &= -4 <= diff2 && diff2 <= 0;
-  return result;
+  return -8 < diffs_[2] && diffs_[2] < 8
+      && -4 < diffs_[2] && diffs_[2] < 4;
+}
+
+bool Vl6180x::isTrendDown()
+{
+  bool is_trend_down = true;
+  for (int i = 0; i < EMA_COUNT; i++)
+  {
+    if (diffs_[i] > 0)
+      is_trend_down = false;
+  }
+  return is_trend_down;
 }
 
 bool Vl6180x::updateButtonState(float val)
 {
-  float raw_down = (val < emas_[0].ema() - cfg.down_thresh);
-  if (raw_down && !is_button_down_ and isStable())
+  //float raw_down = (val < emas_[0].ema() - cfg.down_thresh);
+  bool raw_down = diffs_[0] < -cfg.down_thresh;
+  diffs_[EMA_COUNT] = raw_down ? 80 : 75;
+  diffs_[EMA_COUNT+1] = isTrendDown() ? 70 : 65;
+  if (!is_button_down_ && raw_down && isTrendDown() && isStable())
   {
     is_button_down_ = true;
     begin_down_stamp_ = now();
@@ -153,7 +173,10 @@ void Vl6180x::task()
 
     bool is_down = updateButtonState(cur_prox);
     if (!is_down || isDownTimeout())
+    {
       updateEmas(cur_proxf);
+      updateDiffs(cur_proxf);
+    }
 
     publishRangeButton(cur_prox);
     if (samples_ % 50 == 0)
