@@ -59,9 +59,27 @@ struct Config
   int up_thresh = 3;
   long down_latch_dur = 500;
   long down_timeout = 2000;
+  int clip_min = 0;
+  int clip_max = 100;
+  int valid_min = 0;
+  int valid_max = 100;
 
 };
 Config cfg; // { 200 };
+
+bool Vl6180x::isValidSample(int val)
+{
+  return cfg.valid_min <= val && val <= cfg.valid_max;
+}
+
+int Vl6180x::clipSample(int val)
+{
+  if (val > cfg.clip_max)
+    return cfg.clip_max;
+  if (val < cfg.clip_min)
+    return cfg.clip_min;
+  return val;
+}
 
 void Vl6180x::updateEmas(float val)
 {
@@ -160,10 +178,19 @@ void Vl6180x::task()
     int cur_prox = driver_.readRange();
     if (samples_ % 200 == 0)
       tone(BUZZER_PIN, 220, 3);
-    float cur_proxf = static_cast<float>(cur_prox);
     TickType_t cur_stamp = xTaskGetTickCount();
     int rate = samples_ * 1000 / (cur_stamp - start_stamp);
     ++samples_;
+
+    if (!isValidSample(cur_prox))
+    {
+      if (samples_ % 50 == 0)
+        debug("Invlid Reading");
+      continue;
+    }
+
+    cur_prox = clipSample(cur_prox);
+    float cur_proxf = static_cast<float>(cur_prox);
 
     if (samples_ < cfg.start_delay_samples)
     {

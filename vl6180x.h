@@ -50,6 +50,8 @@ protected:
   void updateEmas(float val);
   void updateDiffs(float val);
   bool updateButtonState(float val);
+  bool isValidSample(int val);
+  int clipSample(int val);
   bool isStable();
   bool isTrendDown();
   long downDuration();
