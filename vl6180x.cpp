@@ -173,7 +173,10 @@ void Vl6180x::task()
   debug("VL6180X entry");
   while (true)
   {
+    digitalWrite(13, HIGH);
     int cur_prox = driver_.readRange();
+    digitalWrite(13, LOW);
+
     if (samples_ % 200 == 0)
       tone(BUZZER_PIN, 220, 3);
     TickType_t cur_stamp = xTaskGetTickCount();
