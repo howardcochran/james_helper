@@ -147,7 +147,8 @@ bool Vl6180x::updateButtonState(float val)
   else if (is_button_down_)
   {
     bool raw_up = (val > begin_down_val_ - cfg.up_thresh);
-    if (raw_up and downDuration() > cfg.down_latch_dur)
+    if ((raw_up && downDuration() > cfg.down_latch_dur)
+        || downDuration() >= 2 * cfg.down_timeout)
     {
       is_button_down_ = false;
       begin_down_stamp_ = now();
@@ -216,7 +217,7 @@ void Vl6180x::task()
     if (!isValidSample(cur_prox))
     {
       if (samples_ % 50 == 0)
-        debug("Invlid Reading");
+        debug("Invalid Reading");
       continue;
     }
 
