@@ -169,8 +169,6 @@ void Vl6180x::publishRangeButton(float range)
 void Vl6180x::task()
 {
   TickType_t start_stamp = xTaskGetTickCount() - 1;
-  TickType_t down_stamp = 0;
-  TickType_t raw_change_stamp = 0;
 
   debug("VL6180X entry");
   while (true)
