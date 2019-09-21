@@ -190,63 +190,6 @@ void Vl6180x::task()
   vTaskDelete( NULL );
 }
 
-#if 0
-void Vl6180x::task()
-{
-  TickType_t start_stamp = xTaskGetTickCount() - 1;
-  int count = 0;
-  float ema = 0;
-  float ema_alpha = (1.0 / 400.0);
-  float ema0 = 0;
-  float ema0_alpha = (1.0 / 4.0);
-  const int down_thresh = -60;
-  const int up_thresh = 50;
-  TickType_t down_stamp = 0;
-  TickType_t raw_change_stamp = 0;
-  int prev_raw_state = IN_BETWEEN;
-  int debounce_time = 200;
-
-  while (true)
-  {
-    int cur_prox = driver_.readRange();
-    TickType_t cur_stamp = xTaskGetTickCount();
-    int rate = count * 1000 / (cur_stamp - start_stamp);
-    ++count;
-
-    ema = ema * (1.0 - ema_alpha) + cur_prox * ema_alpha;
-    ema0 = ema0 * (1.0 - ema0_alpha) + cur_prox * ema0_alpha;
-    int delta = cur_prox - (int)ema;
-
-    int raw_state = IN_BETWEEN;
-    if (delta < down_thresh)
-      raw_state = DOWN;
-    else if (delta > up_thresh)
-      raw_state = UP;
-
-    if (prev_raw_state != raw_state)
-    {
-      prev_raw_state = raw_state;
-      raw_change_stamp = cur_stamp;
-    }
-    TickType_t raw_change_elapsed = cur_stamp - raw_change_stamp;
-    if (raw_change_elapsed > debounce_time)
-    {
-      filtered_state_ = raw_state;
-    }
-
-    range_msg_.header.stamp = nh_->now();
-    range_msg_.range = (float)ema0;
-    range_pub_.publish(&range_msg_);
-
-    if (count % 20 == 0)
-      debug("cur: %d filt: %d prox: %d ema: %d delta: %d rate: %d t: %d %d\n", raw_state, filtered_state_, cur_prox, (int)ema, delta, rate, driver_.time1, driver_.time2);
-    taskDelayMs(5);
-  }
-  // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
-  vTaskDelete( NULL );
-}
-#endif
-
 int Vl6180x::getState()
 {
   if (is_button_down_)
