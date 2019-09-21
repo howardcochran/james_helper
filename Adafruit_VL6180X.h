@@ -87,8 +87,6 @@ class Adafruit_VL6180X {
   uint8_t readRangeStatus(void);
   void setDelayFunction(void (*delay_func)(int)) { _delay_func = delay_func; }
 
-  int time1;
-  int time2;
 
   void loadSettings(void);
 
