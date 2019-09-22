@@ -7,8 +7,7 @@
 #include "debug.h"
 #include "raw_button.h"
 #include "vl6180x.h"
-
-#define BUZZER_PIN 14
+#include "pins.h"
 
 static long now()
 {
@@ -42,9 +41,9 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
 
 void Vl6180x::resetDriver()
 {
-  digitalWrite(ENABLE_PIN, LOW);
+  digitalWrite(PIN_VL6180X_ENABLE, LOW);
   vNopDelayMS(10);  // Can be called before scheduler started!
-  digitalWrite(ENABLE_PIN, HIGH);
+  digitalWrite(PIN_VL6180X_ENABLE, HIGH);
   vNopDelayMS(10);
 
   driver_.setDelayFunction(taskDelayMs);
@@ -199,7 +198,7 @@ void Vl6180x::task()
     if (driver_.driver_status != 0)
     {
       debug("ERROR: PROX READ FAILED. Status: %d", driver_.driver_status);
-      tone(BUZZER_PIN, 880, 5000);
+      tone(PIN_BUZZER, 880, 5000);
       resetDriver();
       resetState();
       ++reset_count;
@@ -209,7 +208,7 @@ void Vl6180x::task()
     }
 
     if (samples_ % 200 == 0)
-      tone(BUZZER_PIN, 220, 3);
+      tone(PIN_BUZZER, 220, 3);
     TickType_t cur_stamp = xTaskGetTickCount();
     int rate = samples_ * 1000 / (cur_stamp - start_stamp);
     ++samples_;

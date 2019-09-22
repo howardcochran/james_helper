@@ -8,11 +8,6 @@
 #include "hardware_button.h"
 #include "vl6180x.h"
 
-#define ERROR_LED_PIN 13 //Led Pin: Typical Arduino Board
-#define ERROR_LED_LIGHTUP_STATE LOW // the state that makes the led light up on your board, either low or high
-#define MAIN_BUTTON_PIN 5
-#define BUZZER_PIN 14
-
 class App
 {
 public:

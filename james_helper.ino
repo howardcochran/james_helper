@@ -8,18 +8,19 @@
 #include "delay.h"
 #include "morse.h"
 #include "nurse_call.h"
+#include "pins.h"
 
 App james_helper;
 
 void App::init()
 {
-  digitalWrite(BUZZER_PIN, LOW);
-  pinMode(BUZZER_PIN, OUTPUT);
-  tone(BUZZER_PIN, 880, 200);
+  digitalWrite(PIN_BUZZER, LOW);
+  pinMode(PIN_BUZZER, OUTPUT);
+  tone(PIN_BUZZER, 880, 200);
   vNopDelayMS(4000);
-  tone(BUZZER_PIN, 700);
+  tone(PIN_BUZZER, 700);
   vNopDelayMS(100);
-  tone(BUZZER_PIN, 880, 100);
+  tone(PIN_BUZZER, 880, 100);
 
   nh_.getHardware()->setBaud(115200);
   nh_.initNode();
@@ -30,19 +31,19 @@ void App::init()
   //               Probably ran out of heap.
   //    1 blink  - Stack overflow, Task needs more bytes defined for its stack!
   //               Use the taskMonitor thread to help gauge how much more you need
-  vSetErrorLed(ERROR_LED_PIN, ERROR_LED_LIGHTUP_STATE);
+  vSetErrorLed(PIN_LED_BUILTIN, LOW);
 
   QueueHandle_t trigger_queue = xQueueCreate(20, sizeof(ButtonEvent));
-  // GPIOButton raw_trigger(MAIN_BUTTON_PIN);
+  // GPIOButton raw_trigger(PIN_RED_BUTTON);
   prox_button_.init(trigger_queue, nh_);
   Button main_trigger(prox_button_, trigger_queue);
 
   TaskHandle_t TaskHandle_buttonRead;
   xTaskCreate(Button::taskEntry, "buttonRead", 256, &main_trigger, tskIDLE_PRIORITY + 3, &TaskHandle_buttonRead);
 
-  nurse_caller_.init(trigger_queue, 12);
+  nurse_caller_.init(trigger_queue, PIN_RELAY);
   morse_decoder_.init(trigger_queue);
-  hardware_button_.init(trigger_queue, 12);
+  hardware_button_.init(trigger_queue, PIN_RELAY);
 
   memset(modes_, 0, sizeof(modes_));
   modes_[(int)AppMode::NURSE_CALL] = &nurse_caller_;

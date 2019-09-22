@@ -8,7 +8,6 @@
 #include "debug.h"
 
 #define EMA_COUNT 3
-#define ENABLE_PIN 11
 
 class Ema
 {

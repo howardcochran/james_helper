@@ -3,9 +3,7 @@
 #include <Arduino.h>
 #include "button.h"
 #include "delay.h"
-
-// HACK ALERT:
-#define BUZZER_PIN 14
+#include "pins.h"
 
 Button::Button(RawButton& raw_button, QueueHandle_t output_queue)
   : raw_button_(raw_button),
@@ -33,11 +31,11 @@ void Button::task()
 
       if (curButtonState == DOWN)
       {
-        tone(BUZZER_PIN, TRIGGER_BUZZER_PITCH);
+        tone(PIN_BUZZER, TRIGGER_BUZZER_PITCH);
       }
       else
       {
-        noTone(BUZZER_PIN);
+        noTone(PIN_BUZZER);
       }
       prevStateChangeTime = curTime;
       prevButtonState = curButtonState;
