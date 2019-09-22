@@ -36,6 +36,8 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   output_queue_ = output_queue;
   resetState();
   resetDriver();
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_LED_YELLOW, OUTPUT);
   create_task("VL6180X_driver");
 }
 
@@ -157,6 +159,12 @@ bool Vl6180x::updateButtonState(float val)
   return is_button_down_;
 }
 
+void Vl6180x::updateUI()
+{
+  digitalWrite(PIN_LED_GREEN, isStable() ? HIGH : LOW);
+  digitalWrite(PIN_LED_YELLOW, is_button_down_ ? HIGH : LOW);
+}
+
 void Vl6180x::publishRangeButton(float range)
 {
   button_msg_.is_down = is_button_down_;
@@ -181,6 +189,7 @@ void Vl6180x::resetState()
   {
     emas_[i].reset();
   }
+  updateUI();
 }
 
 void Vl6180x::task()
@@ -235,6 +244,8 @@ void Vl6180x::task()
       updateEmas(cur_proxf);
       updateDiffs(cur_proxf);
     }
+
+    updateUI();
 
     publishRangeButton(cur_prox);
     if (samples_ % 50 == 0)
