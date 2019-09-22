@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "nurse_call.h"
 #include "note_pitches.h"
+#include "pins.h"
 
 void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
 {
@@ -13,12 +14,15 @@ void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
   relay_pin_ = relay_pin;
   digitalWrite(relay_pin_, LOW);
   pinMode(relay_pin_, OUTPUT);
+  digitalWrite(PIN_LED_RED, LOW);
+  pinMode(PIN_LED_RED, OUTPUT);
   create_task("nurse call");
 }
 
 void NurseCall::callNurse(void) {
   int note_dur = 100;
   digitalWrite(relay_pin_, HIGH);
+  digitalWrite(PIN_LED_RED, HIGH);
   tone(buzzer_pin_, NOTE_G3);
   taskDelayMs(note_dur);
   tone(buzzer_pin_, NOTE_A3);
@@ -37,6 +41,7 @@ void NurseCall::callNurse(void) {
   taskDelayMs(note_dur * 2);
   noTone(buzzer_pin_);
   digitalWrite(relay_pin_, LOW);
+  digitalWrite(PIN_LED_RED, LOW);
 }
 
 void NurseCall::task(void)
