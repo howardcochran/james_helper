@@ -200,9 +200,9 @@ void Vl6180x::task()
   debug("VL6180X entry");
   while (true)
   {
-    if (samples_ % 50 == 0)
+    if (samples_ % 200 == 0)
     {
-      tone(PIN_BUZZER, 220, 3);
+      // tone(PIN_BUZZER, 220, 3);
       digitalWrite(PIN_LED_YELLOW, HIGH);
     }
     digitalWrite(13, HIGH);
@@ -212,11 +212,11 @@ void Vl6180x::task()
     if (driver_.driver_status != 0)
     {
       debug("ERROR: PROX READ FAILED. Status: %d", driver_.driver_status);
-      tone(PIN_BUZZER, 880, 5000);
+      tone(PIN_BUZZER, 880, 2000);
       resetDriver();
       resetState();
       ++reset_count;
-      taskDelayMs(5000);
+      taskDelayMs(2000);
       debug("Reset Complete");
       continue;
     }
