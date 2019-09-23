@@ -15,8 +15,8 @@ public:
 protected:
   QueueHandle_t input_queue_;
   int relay_pin_;
-  const int time_limit_ = 5000;
-  const int clicks_to_trigger_ = 5;
+  const int time_limit_ = 6000;
+  const int clicks_to_trigger_ = 4;
   const int buzzer_pin_ = PIN_BUZZER;
 };
 
