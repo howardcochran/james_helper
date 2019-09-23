@@ -11,6 +11,7 @@
 #include "pins.h"
 
 App james_helper;
+void modeSwitchThread(void *unused);
 
 void App::init()
 {
@@ -51,7 +52,10 @@ void App::init()
   modes_[(int)AppMode::HARDWARE_BUTTON] = &hardware_button_;
   //modes_[(int)AppMode::BT_BUTTON] = ;
   //modes_[(int)AppMode::MENU] = ;
-  james_helper.set_major_mode(App::AppMode::NURSE_CALL);
+  james_helper.setMajorMode(App::AppMode::NURSE_CALL);
+
+  TaskHandle_t TaskHandle_modeSwitch;
+  xTaskCreate(modeSwitchThread, "modeSwitch", 256, NULL, tskIDLE_PRIORITY + 4, &TaskHandle_modeSwitch);
   vTaskStartScheduler();
 }
 
@@ -69,12 +73,33 @@ void App::suspend_all_modes(void)
   }
 }
 
-void App::set_major_mode(AppMode mode)
+void App::setMajorMode(AppMode mode)
 {
-  debug("set_major_mode %d\n", (int)mode);
+  debug("setMajorMode %d\n", (int)mode);
   cur_mode_ = mode;
   suspend_all_modes();
   modes_[(int)mode]->resume();
+}
+
+void modeSwitchThread(void *unused)
+{
+  pinMode(PIN_MID_TOGGLE_SWITCH, INPUT_PULLUP);
+  while (true)
+  {
+    vTaskDelay(500);
+    int mode_switch_pos = digitalRead(PIN_MID_TOGGLE_SWITCH);  // LOW = Nurse Call, HIGH = HW button
+    App::AppMode desired_mode;
+    if (mode_switch_pos == HIGH)
+      desired_mode = App::AppMode::NURSE_CALL;
+    else
+      desired_mode = App::AppMode::HARDWARE_BUTTON;
+    App::AppMode cur_mode = james_helper.getMajorMode();
+    if (cur_mode != desired_mode)
+    {
+      debug("ModeSwitch: Changimg mode to: %d\n", desired_mode);
+      james_helper.setMajorMode(desired_mode);
+    }
+  }
 }
 
 //*****************************************************************

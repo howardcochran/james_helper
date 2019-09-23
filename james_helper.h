@@ -22,7 +22,8 @@ public:
   };
 
   void init(void);
-  void set_major_mode(AppMode);
+  void setMajorMode(AppMode);
+  AppMode getMajorMode() const { return cur_mode_; }
   ros::NodeHandle* getNodeHandle() { return &nh_; }
 
 protected:
