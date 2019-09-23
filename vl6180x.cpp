@@ -200,6 +200,11 @@ void Vl6180x::task()
   debug("VL6180X entry");
   while (true)
   {
+    if (samples_ % 50 == 0)
+    {
+      tone(PIN_BUZZER, 220, 3);
+      digitalWrite(PIN_LED_YELLOW, HIGH);
+    }
     digitalWrite(13, HIGH);
     int cur_prox = driver_.readRange();
     digitalWrite(13, LOW);
@@ -216,8 +221,6 @@ void Vl6180x::task()
       continue;
     }
 
-    if (samples_ % 200 == 0)
-      tone(PIN_BUZZER, 220, 3);
     TickType_t cur_stamp = xTaskGetTickCount();
     int rate = samples_ * 1000 / (cur_stamp - start_stamp);
     ++samples_;
