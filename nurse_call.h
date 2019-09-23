@@ -11,6 +11,7 @@ public:
   void callNurse(void);
   void task(void);
   void create_taska(char *name);
+  virtual void suspend(void);
 
 protected:
   QueueHandle_t input_queue_;

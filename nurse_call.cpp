@@ -83,3 +83,10 @@ void NurseCall::task(void)
     }
   }
 }
+
+void NurseCall::suspend(void)
+{
+  BaseTask::suspend();
+  digitalWrite(relay_pin_, LOW);
+  digitalWrite(PIN_LED_RED, LOW);
+}
