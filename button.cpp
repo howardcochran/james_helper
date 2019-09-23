@@ -31,11 +31,11 @@ void Button::task()
 
       if (curButtonState == DOWN)
       {
-        tone(PIN_BUZZER, TRIGGER_BUZZER_PITCH);
+        tone(PIN_BUZZER, 440, 50);
       }
       else
       {
-        noTone(PIN_BUZZER);
+        tone(PIN_BUZZER, 880, 50);
       }
       prevStateChangeTime = curTime;
       prevButtonState = curButtonState;

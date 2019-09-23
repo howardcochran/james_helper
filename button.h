@@ -2,8 +2,6 @@
 #define __JAMES_HELPER__BUTTON_H
 #include "raw_button.h"
 
-#define TRIGGER_BUZZER_PITCH 200
-
 struct ButtonEvent
 {
   int state;
