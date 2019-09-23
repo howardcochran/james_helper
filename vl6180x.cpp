@@ -60,8 +60,8 @@ void Vl6180x::resetDriver()
 struct Config
 {
   int start_delay_samples = 200;
-  int down_thresh = 5;
-  int up_thresh = 3;
+  int down_thresh = 7;
+  int up_thresh = 5;
   long down_latch_dur = 500;
   long down_timeout = 2000;
   int clip_min = 0;
