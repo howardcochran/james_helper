@@ -159,9 +159,9 @@ bool Vl6180x::updateButtonState(float val)
   return is_button_down_;
 }
 
-void Vl6180x::updateUI()
+void Vl6180x::updateUI(bool isValid)
 {
-  digitalWrite(PIN_LED_GREEN, isStable() ? HIGH : LOW);
+  digitalWrite(PIN_LED_GREEN, (isValid && isStable()) ? HIGH : LOW);
   digitalWrite(PIN_LED_YELLOW, is_button_down_ ? HIGH : LOW);
 }
 
@@ -229,6 +229,7 @@ void Vl6180x::task()
     {
       if (samples_ % 50 == 0)
         debug("Invalid Reading");
+      updateUI(false);
       continue;
     }
 
