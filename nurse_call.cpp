@@ -16,10 +16,12 @@ void NurseCall::init(QueueHandle_t input_queue, int relay_pin)
   pinMode(relay_pin_, OUTPUT);
   digitalWrite(PIN_LED_RED, LOW);
   pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_RED_BUTTON, INPUT);
   create_task("nurse call");
 }
 
 void NurseCall::callNurse(void) {
+  is_call_active_ = true;
   int note_dur = 100;
   digitalWrite(relay_pin_, HIGH);
   digitalWrite(PIN_LED_RED, HIGH);
@@ -44,6 +46,39 @@ void NurseCall::callNurse(void) {
   digitalWrite(PIN_LED_RED, LOW);
 }
 
+void NurseCall::clearNurseCall()
+{
+  int note_dur = 200;
+  debug ("Claring Nurse Call state");
+  is_call_active_ = false;
+  tone(buzzer_pin_, NOTE_G4);
+  taskDelayMs(note_dur);
+  tone(buzzer_pin_, NOTE_G3);
+  taskDelayMs(note_dur);
+  noTone(buzzer_pin_);
+  digitalWrite(relay_pin_, LOW);
+  digitalWrite(PIN_LED_RED, LOW);
+  is_led_on_ = false;
+}
+
+void NurseCall::updateUI()
+{
+  if (is_call_active_)
+  {
+    if (digitalRead(PIN_RED_BUTTON) == HIGH)
+    {
+      clearNurseCall();
+      return;
+    }
+    is_led_on_ = !is_led_on_;
+  }
+  else
+  {
+    is_led_on_ = false;
+  }
+  digitalWrite(PIN_LED_RED, is_led_on_);
+}
+
 void NurseCall::task(void)
 {
   ButtonEvent event = {UP, 0};
@@ -52,7 +87,9 @@ void NurseCall::task(void)
 
   while(true)
   {
-    if (!xQueueReceive(input_queue_, &event, 1000000000000000000))
+    bool have_event = xQueueReceive(input_queue_, &event, 100 / portTICK_PERIOD_MS);
+    updateUI();
+    if (!have_event)
     {
       continue;
     }
@@ -75,9 +112,12 @@ void NurseCall::task(void)
         cur_clicks++;
         if (cur_clicks >= clicks_to_trigger_)
         {
-          callNurse();
           start_time = 0;
           cur_clicks = 0;
+          if (is_call_active_)
+            clearNurseCall();
+          else
+            callNurse();
         }
       }
     }
@@ -87,6 +127,10 @@ void NurseCall::task(void)
 void NurseCall::suspend(void)
 {
   BaseTask::suspend();
+  int note_dur = 200;
+  is_call_active_ = false;
+  is_led_on_ = false;
+  noTone(buzzer_pin_);
   digitalWrite(relay_pin_, LOW);
   digitalWrite(PIN_LED_RED, LOW);
 }
