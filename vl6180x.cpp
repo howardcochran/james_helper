@@ -8,6 +8,7 @@
 #include "raw_button.h"
 #include "vl6180x.h"
 #include "pins.h"
+#include "Adafruit_SleepyDog.h"
 
 static long now()
 {
@@ -34,6 +35,8 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   nh_->advertise(button_pub_);
 
   output_queue_ = output_queue;
+  int watchdogTimeoutMS = Watchdog.enable(16384);
+  debug("Watchdog enabled. Timeout = %d ms", watchdogTimeoutMS);
   resetState();
   resetDriver();
   pinMode(PIN_LED_GREEN, OUTPUT);
@@ -233,6 +236,9 @@ void Vl6180x::task()
       continue;
     }
 
+    // Service the watchdog here so that we'll reset if we only ever get bad samples
+    Watchdog.reset();
+
     cur_prox = clipSample(cur_prox);
     float cur_proxf = static_cast<float>(cur_prox);
 
@@ -260,6 +266,7 @@ void Vl6180x::task()
     }
     taskDelayMs(5);
   }
+  Watchdog.disable();
   // Have to call this or the system crashes when you reach the end bracket and then get scheduled.
   vTaskDelete( NULL );
 }
