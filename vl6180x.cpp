@@ -23,6 +23,9 @@ Vl6180x::Vl6180x()
 
 void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
 {
+  volatile uint8_t* pm_regs = 0x40000400;
+  debug("RCAUSE reset cause register: 0x%02x", *(regs + 0x38));
+
   nh_ = &nh;
   memset(msg_emas_, 0, sizeof(msg_emas_));
   memset(msg_ema_periods_, 0, sizeof(msg_ema_periods_));
