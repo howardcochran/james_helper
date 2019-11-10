@@ -41,7 +41,6 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   int watchdogTimeoutMS = Watchdog.enable(16384);
   debug("Watchdog enabled. Timeout = %d ms", watchdogTimeoutMS);
   resetState();
-  resetDriver();
   pinMode(PIN_LED_GREEN, OUTPUT);
   pinMode(PIN_LED_YELLOW, OUTPUT);
   create_task("VL6180X_driver");
@@ -50,9 +49,9 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
 void Vl6180x::resetDriver()
 {
   digitalWrite(PIN_VL6180X_ENABLE, LOW);
-  vNopDelayMS(10);  // Can be called before scheduler started!
+  taskDelayMS(10);
   digitalWrite(PIN_VL6180X_ENABLE, HIGH);
-  vNopDelayMS(10);
+  taskDelayMS(10);
 
   driver_.setDelayFunction(taskDelayMs);
   if (!driver_.begin())
@@ -204,6 +203,8 @@ void Vl6180x::task()
   int reset_count = 0;
 
   debug("VL6180X entry");
+  resetDriver();
+
   while (true)
   {
     if (samples_ % 200 == 0)
