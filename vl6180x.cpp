@@ -38,7 +38,7 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   nh_->advertise(button_pub_);
 
   output_queue_ = output_queue;
-  int watchdogTimeoutMS = Watchdog.enable(16384);
+  int watchdogTimeoutMS = Watchdog.enable(8192);
   debug("Watchdog enabled. Timeout = %d ms", watchdogTimeoutMS);
   resetState();
   pinMode(PIN_LED_GREEN, OUTPUT);
