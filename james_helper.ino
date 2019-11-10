@@ -18,7 +18,7 @@ void App::init()
   digitalWrite(PIN_BUZZER, LOW);
   pinMode(PIN_BUZZER, OUTPUT);
   tone(PIN_BUZZER, 880, 200);
-  vNopDelayMS(4000);
+  vNopDelayMS(2000);
   tone(PIN_BUZZER, 700, 101);
   vNopDelayMS(100);
   tone(PIN_BUZZER, 880, 100);
