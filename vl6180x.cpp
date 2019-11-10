@@ -41,6 +41,10 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
   int watchdogTimeoutMS = Watchdog.enable(8192);
   debug("Watchdog enabled. Timeout = %d ms", watchdogTimeoutMS);
   resetState();
+  digitalWrite(PIN_VL6180X_ENABLE, LOW);
+  digitalWrite(PIN_VL6180X_PWR, LOW);
+  pinMode(PIN_VL6180X_ENABLE, OUTPUT);
+  pinMode(PIN_VL6180X_PWR, OUTPUT);
   pinMode(PIN_LED_GREEN, OUTPUT);
   pinMode(PIN_LED_YELLOW, OUTPUT);
   create_task("VL6180X_driver");
@@ -49,9 +53,11 @@ void Vl6180x::init(QueueHandle_t output_queue, ros::NodeHandle& nh)
 void Vl6180x::resetDriver()
 {
   digitalWrite(PIN_VL6180X_ENABLE, LOW);
-  taskDelayMS(10);
+  digitalWrite(PIN_VL6180X_PWR, LOW);
+  taskDelayMs(500);
+  digitalWrite(PIN_VL6180X_PWR, HIGH);
   digitalWrite(PIN_VL6180X_ENABLE, HIGH);
-  taskDelayMS(10);
+  taskDelayMs(10);
 
   driver_.setDelayFunction(taskDelayMs);
   if (!driver_.begin())
