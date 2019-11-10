@@ -3,6 +3,7 @@
 
 #define PIN_VL6180X_IRQ          6   // GPIO1
 #define PIN_VL6180X_ENABLE       5   // GPIO0
+#define PIN_VL6180X_PWR          9   // GPIO0
 #define PIN_BUZZER              12
 #define PIN_LED_BUILTIN         13
 #define PIN_LED_GREEN           14

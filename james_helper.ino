@@ -19,7 +19,7 @@ void App::init()
   pinMode(PIN_BUZZER, OUTPUT);
   tone(PIN_BUZZER, 880, 200);
   vNopDelayMS(4000);
-  tone(PIN_BUZZER, 700);
+  tone(PIN_BUZZER, 700, 101);
   vNopDelayMS(100);
   tone(PIN_BUZZER, 880, 100);
 
