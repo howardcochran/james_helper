@@ -207,6 +207,7 @@ void Vl6180x::task()
 {
   TickType_t start_stamp = xTaskGetTickCount() - 1;
   int reset_count = 0;
+  int failed_read_count = 0;
 
   debug("VL6180X entry");
   resetDriver();
@@ -224,15 +225,23 @@ void Vl6180x::task()
 
     if (driver_.driver_status != 0)
     {
-      debug("ERROR: PROX READ FAILED. Status: %d", driver_.driver_status);
-      tone(PIN_BUZZER, 880, 2000);
-      resetDriver();
-      resetState();
-      ++reset_count;
-      taskDelayMs(2000);
-      debug("Reset Complete");
+      ++failed_read_count;
+      debug("ERROR: PROX READ FAILED. Status: %d, fail_cnt: %d, reset_cnt: %d",
+            driver_.driver_status, failed_read_count, reset_count);
+      if (failed_read_count > 4)
+      {
+        debug("Resetting");
+        tone(PIN_BUZZER, 880, 2000);
+        resetDriver();
+        resetState();
+        ++reset_count;
+        taskDelayMs(2000);
+        failed_read_count = 0;
+        debug("Reset Complete");
+      }
       continue;
     }
+    failed_read_count = 0;
 
     TickType_t cur_stamp = xTaskGetTickCount();
     int rate = samples_ * 1000 / (cur_stamp - start_stamp);
